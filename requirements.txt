@@ -6,7 +6,7 @@ pydantic-settings
 email-validator
 argon2-cffi
 jupyter
-# pytest
+pytest
 # jinja2
 # python-multipart
 # python-jose[cryptography]
