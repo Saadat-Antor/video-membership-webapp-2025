@@ -7,7 +7,7 @@ email-validator
 argon2-cffi
 jupyter
 pytest
-# jinja2
-# python-multipart
-# python-jose[cryptography]
-# algoliasearch
+jinja2
+python-multipart
+python-jose[cryptography]
+algoliasearch

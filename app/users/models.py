@@ -8,9 +8,10 @@ settings = get_settings()
 
 class User(Model):
     __keyspace__ = settings.keyspace
+    email = columns.Text(primary_key=True)
     user_id = columns.UUID(primary_key=True, default=uuid.uuid1)
     password = columns.Text()
-    email = columns.Text(primary_key=True)
+
 
     def __str__(self):
         return self.__repr__()
@@ -32,7 +33,7 @@ class User(Model):
     
     @staticmethod
     def create_user(email, password):
-        q = User.objects().filter(email=email).allow_filtering()
+        q = User.objects().filter(email=email)
         if q.count() != 0:
             raise Exception("The email has already been registered.")
         
