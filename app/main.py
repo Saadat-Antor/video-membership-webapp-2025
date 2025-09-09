@@ -1,12 +1,13 @@
-from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse
 from . import db, utils
-from .shortcuts import render, redirect
-from .users.schemas import UserSignupSchema, UserLoginSchema
-from cassandra.cqlengine.management import sync_table
-from .users.decorators import login_required
-from contextlib import asynccontextmanager
 from .users.models import User
+from .shortcuts import render, redirect
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse
+from .users.decorators import login_required
+from cassandra.cqlengine.management import sync_table
+from .users.schemas import UserSignupSchema, UserLoginSchema
+
 
 DB_SESSION = None
 
@@ -36,7 +37,7 @@ def account_view_page(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 def login_get_view(request: Request):
-    session_id = request.cookies.get("session_id") or None
+    session_id = request.cookies.get("cookies") or None
     return render(request, "auth/login.html", {"logged_in": session_id is not None})
 
 @app.post("/login", response_class=HTMLResponse)
@@ -60,7 +61,6 @@ def login_post_view(
     
     if len(errors) > 0:
         return render(request, "auth/login.html", context, status_code=400)
-    print("Redirecting...")
     return redirect("/", cookies)
 
 @app.get("/signup", response_class=HTMLResponse)
