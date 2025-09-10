@@ -1,0 +1,10 @@
+
+{% extends "base.html" %}
+
+{% block title %}Videos | {{ super() }}{% endblock %}
+
+{% block content %}
+    {% for video_object in object_list %}
+        <p>{{ video_object.host_id }}</p>
+    {% endfor %}
+{% endblock %}

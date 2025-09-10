@@ -1,15 +1,20 @@
 from . import db, utils
 from .users.models import User
 from .shortcuts import render, redirect
+from .videos.models import Video
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
+from starlette.middleware.authentication import AuthenticationMiddleware
+from .users.backends import JWTCookieBackend
 from .users.decorators import login_required
 from cassandra.cqlengine.management import sync_table
 from .users.schemas import UserSignupSchema, UserLoginSchema
+from app.videos.routers import router as video_router
 
 
 DB_SESSION = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,17 +22,20 @@ async def lifespan(app: FastAPI):
     global DB_SESSION
     DB_SESSION = db.get_session()
     sync_table(User)
+    sync_table(Video)
     yield
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(AuthenticationMiddleware, backend=JWTCookieBackend())
+app.include_router(video_router)
 
+from .handlers import *
 
 @app.get("/", response_class=HTMLResponse)
 def homepage(request: Request):
-    context = {
-        "abc": "Awesome"
-    }
-    return render(request, "home.html", context)
+    if request.user.is_authenticated:
+        return render(request, "dashboard.html", {}, status_code=200)
+    return render(request, "home.html", {})
 
 @app.get("/account", response_class=HTMLResponse)
 @login_required
