@@ -1,10 +1,13 @@
-
 {% extends "base.html" %}
 
 {% block title %}Videos | {{ super() }}{% endblock %}
 
 {% block content %}
     {% for video_object in object_list %}
-        <p>{{ video_object.host_id }}</p>
+        <li>
+            <p>
+                <a href="{{ video_object.path }}">{% if not video_object.title %}{{ video_object.host_id }}{% else %}{{ video_object.title }}{% endif %}</a>
+            </p>
+        </li>
     {% endfor %}
 {% endblock %}

@@ -1,15 +1,59 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse
 from .models import Video
-from app.shortcuts import render
+from app.shortcuts import render, redirect
+from app.users.decorators import login_required
+from app import utils
+from .schemas import VideoCreateSchema
 
 router = APIRouter(
     prefix='/videos'
 )
 
+@router.get("/create", response_class=HTMLResponse)
+@login_required
+def video_create_view(request: Request):
+    return render(request, "videos/create.html", {})
+
+@router.post("/create", response_class=HTMLResponse)
+@login_required
+def video_create_post_view(
+    request: Request,
+    title: str=Form(...),
+    url: str=Form(...),
+    ):
+    raw_data = {
+        "title": title,
+        "url": url,
+        "user_id": request.user.username
+    }
+
+    data, errors = utils.valid_schema_data_or_error(raw_data, VideoCreateSchema)
+    if data:
+        context = {
+            "data": data["youtube_id"],
+            "errors": errors,
+            "title": title,
+            "url": url,
+        }
+    else:
+        context = {
+            "data": {},
+            "errors": errors,
+            "title": title,
+            "url": url,
+        }
+    
+    redirect_path = data["youtube_id"].get("path") if data else "/create" 
+
+    if len(errors) > 0:
+        return render(request, "videos/create.html", context, status_code=400)
+
+    return redirect(redirect_path)
+
 @router.get("/", response_class=HTMLResponse)
 def video_list_view(request: Request):
-    print(request.user)
+
     q = Video.objects.all().limit(100)
     context = {
         "object_list": q

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     keyspace: str = Field(..., alias="ASTRADB_KEYSPACE")
     secret_key: str = Field(...)
     jwt_algo: str = Field(default="HS256")
+    session_duration: int = Field(default=86400)
     model_config = ConfigDict(env_file=".env")
 
     # class Config:
