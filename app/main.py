@@ -11,6 +11,7 @@ from .users.decorators import login_required
 from cassandra.cqlengine.management import sync_table
 from .users.schemas import UserSignupSchema, UserLoginSchema
 from app.videos.routers import router as video_router
+from .watch_events.models import WatchEvent
 
 
 DB_SESSION = None
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI):
     DB_SESSION = db.get_session()
     sync_table(User)
     sync_table(Video)
+    sync_table(WatchEvent)
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -106,5 +108,14 @@ def users_list_view():
 @app.post("/watch-event")
 def watch_event_view(request: Request, data: dict):
     print(data)
-    print(request.user.is_authenticated)
+    if request.user.is_authenticated:
+        WatchEvent.objects.create(
+            host_id = data.get('videoId'),
+            user_id = request.user.username,
+            start_time = 0,
+            end_time = data.get('currentTime'),
+            duration = 500,
+            complete = False
+        )
+
     return {"working": True}
