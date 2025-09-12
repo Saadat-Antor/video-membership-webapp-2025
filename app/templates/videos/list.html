@@ -4,10 +4,12 @@
 
 {% block content %}
     {% for video_object in object_list %}
+    <div>
         <li>
             <p>
                 <a href="{{ video_object.path }}">{% if not video_object.title %}{{ video_object.host_id }}{% else %}{{ video_object.title }}{% endif %}</a>
             </p>
         </li>
+    </div>
     {% endfor %}
 {% endblock %}

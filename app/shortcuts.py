@@ -1,10 +1,28 @@
 from app import config
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from cassandra.cqlengine.query import (
+    DoesNotExist,
+    MultipleObjectsReturned
+)
 
 settings = config.get_settings()
 
 templates = Jinja2Templates(directory=str(settings.templates_dir))
+
+
+def get_object_or_404(KlassName, **kwargs):
+    try:
+        obj = KlassName.objects.get(**kwargs)
+    except DoesNotExist:
+        raise StarletteHTTPException(status_code=404)
+    except MultipleObjectsReturned:
+        raise StarletteHTTPException(status_code=400)
+    except:
+        raise StarletteHTTPException(status_code=500)
+    return obj
+
 
 def render(request, template_name, context, status_code:int=200, cookies:dict={}):
     ctx = context.copy()
