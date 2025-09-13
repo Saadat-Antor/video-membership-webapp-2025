@@ -1,14 +1,14 @@
 
 {% extends "base.html" %}
 
-{% block title %}Video | {{ super() }}{% endblock %}
+{% block title %}{% if object.title %}{{ object.title }}{% else %}Video | {{ super() }}{% endif %}{% endblock %}
 
 {% block content %}
-<h1>Video</h1>
-{{ host_id }} - {{ object }}
+<h1>{% if object.title %}{{ object.title }}{% endif %}</h1>
+
 </br>
 
-<div id="yt-video" data-video-id="{{ host_id }}" data-start-time="0"></div>
+<div id="yt-video" data-video-id="{{ host_id }}" data-start-time="{{ start_time }}"></div>
 
 <div><code>{{ object.render() }}</code></div>
 
@@ -26,6 +26,7 @@
         var initialStartTime = parseInt(youtubeVideoDiv.getAttribute('data-start-time')) || defaultStartTime
         var timeSinceLastSaved = 0
         var timeIntervalForSave = 5000
+        var watchEventEndpoint = "/api/events/watch"
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('yt-video', {
                 height: '390',
@@ -51,7 +52,7 @@
 
     function monitorCurrentPlayback() {
         currentTime = player.getCurrentTime()
-        console.log('currentTime', currentTime)
+        // console.log('currentTime', currentTime)
         timeSinceLastSaved += monitorTimeInterval
         if (isPlaying) {
             monitorTimeOut = setTimeout(monitorCurrentPlayback, monitorTimeInterval)
@@ -64,7 +65,7 @@
 
     function onPlayerStateChange(event) {
         if (event.data === YT.PlayerState.PLAYING){
-            console.log("is playing")
+            // console.log("is playing")
             isPlaying = true
             monitorCurrentPlayback()  
         }
@@ -74,14 +75,14 @@
         //     monitorCurrentPlayback()
         // }
         else if (event.data === YT.PlayerState.PAUSED){
-            console.log("is paused")
+            // console.log("is paused")
             clearTimeout(monitorTimeOut)
             isPlaying = false
             monitorCurrentPlayback()
             storeWatchEvent()
         }
         else if (event.data === YT.PlayerState.ENDED){
-            console.log("has ended")
+            // console.log("has ended")
             clearTimeout(monitorTimeOut)
             isPlaying = false
             monitorCurrentPlayback()
@@ -90,12 +91,17 @@
     }
 
     function storeWatchEvent(){
+        var duration = player.getDuration()
         var data = {
-            currentTime: currentTime,
-            videoId: videoId
+            end_time: currentTime,
+            start_time: initialStartTime,
+            duration: duration,
+            host_id: videoId,
+            complete: (duration * 0.98) < currentTime,
+            path: window.location.pathname
         }
         timeSinceLastSaved = 0
-        console.log('saving...', data)
+        // console.log('saving...', data)
 
         var reqOptions = {
         method: "POST",
@@ -104,13 +110,13 @@
         },
         body: JSON.stringify(data)
         }
-        fetch("/watch-event", reqOptions)
+        fetch(watchEventEndpoint, reqOptions)
         .then(response => response.json())
         .then(data => {
-            console.log('success: ', data)
+            // console.log('success: ', data)
         })
         .catch(err => {
-            console.log('error: ', err)
+            // console.log('error: ', err)
         })
     }
 

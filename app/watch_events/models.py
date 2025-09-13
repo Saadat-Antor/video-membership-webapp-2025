@@ -1,7 +1,7 @@
 import uuid
+from app import config
 from cassandra.cqlengine import columns
 from cassandra.cqlengine.models import Model
-from app import config
 
 settings = config.get_settings()
 

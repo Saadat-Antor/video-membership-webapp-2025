@@ -1,17 +1,18 @@
 from . import db, utils
 from .users.models import User
-from .shortcuts import render, redirect
 from .videos.models import Video
+from .shortcuts import render, redirect
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
-from starlette.middleware.authentication import AuthenticationMiddleware
+from .watch_events.models import WatchEvent
 from .users.backends import JWTCookieBackend
 from .users.decorators import login_required
 from cassandra.cqlengine.management import sync_table
-from .users.schemas import UserSignupSchema, UserLoginSchema
 from app.videos.routers import router as video_router
-from .watch_events.models import WatchEvent
+from .users.schemas import UserSignupSchema, UserLoginSchema
+from app.watch_events.routers import router as watch_event_router
+from starlette.middleware.authentication import AuthenticationMiddleware
 
 
 DB_SESSION = None
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(AuthenticationMiddleware, backend=JWTCookieBackend())
 app.include_router(video_router)
+app.include_router(watch_event_router)
 
 from .handlers import *
 
@@ -105,17 +107,14 @@ def users_list_view():
     q = User.objects().all().limit(10)
     return list(q)
 
-@app.post("/watch-event")
-def watch_event_view(request: Request, data: dict):
-    print(data)
-    if request.user.is_authenticated:
-        WatchEvent.objects.create(
-            host_id = data.get('videoId'),
-            user_id = request.user.username,
-            start_time = 0,
-            end_time = data.get('currentTime'),
-            duration = 500,
-            complete = False
-        )
-
-    return {"working": True}
+# @app.post("/watch-event", response_model=WatchEventSchema)
+# def watch_event_view(request: Request, watch_event: WatchEventSchema):
+#     cleaned_data = watch_event.model_dump()
+#     data = cleaned_data.copy()
+#     data.update({
+#         "user_id": request.user.username
+#     })
+#     if request.user.is_authenticated:
+#         WatchEvent.objects.create(**data)
+    
+#     return watch_event
